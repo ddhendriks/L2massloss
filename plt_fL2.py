@@ -39,8 +39,8 @@ fL2arr = fL2outer + fL2inner
 
 x_arr = logM1dot
 y_arr = loga
-xlabel = r'log$\,|\dot{M}_1|\,\rm [M_\odot\,yr^{-1}]$'
-ylabel = r'log$\,a\,\rm [R_\odot]$'
+xlabel = r'$\log|\dot{M}_1|/(M_\odot\rm \,yr^{-1})$'
+ylabel = r'$\log a/R_\odot$'
 
 if fL2outer_only:
     plt_image = fL2outer
