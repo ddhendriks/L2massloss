@@ -9,7 +9,7 @@ from math import pi, sqrt, sin, cos, tan, log, log10, exp, floor, ceil
 
 fdir = './kap_data/'
 
-case = 1   # 1 -- Hrich, solarZ; 2 -- Hpoor, solarZ; 3 -- Hrich, lowZ
+case = 2  # 1 -- Hrich, solarZ; 2 -- Hpoor, solarZ; 3 -- Hrich, lowZ
 plt_kap = False  # turn this on to make opacity plots
 extrap = False   # extrapolation beyond grid may not be accurate [no need to]
 

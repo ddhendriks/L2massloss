@@ -9,14 +9,14 @@ nofL2 = False   # turn on/off fL2
 
 # adjustable parameters
 # also remember to change "case" in "load_kap_table"!!
-M2_in_Msun = 1.4   # [Msun]
+M2_in_Msun = 10.   # [Msun]
 q = .5     # mass ratio accretor/donnor = M2/M1
 
 savename = 'fL2grid_M%.1f_q%.1f_case%d' % (M2_in_Msun, q, case)
 
 # grid for mass transfer rate and binary separation
-NM1dot = 50   # (100, 100) is sufficiently accurate
-Na = 50
+NM1dot = 200   # (100, 100) is sufficiently accurate
+Na = 200
 logM1dotmin, logM1dotmax = -5.3, -1.3   # [Rsun]
 logamin, logamax = 0.15, 3.25   # [Msun/yr]
 logM1dotgrid = np.linspace(logM1dotmin, logM1dotmax, NM1dot)
