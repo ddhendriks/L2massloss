@@ -3,7 +3,7 @@ File containing the function to run a grid of Mdot and separation configurations
 """
 
 import numpy as np
-import cst
+import constants
 from load_kap_table import *
 import pickle
 from math import pi, sqrt, sin, cos, tan, log, log10, floor, ceil
