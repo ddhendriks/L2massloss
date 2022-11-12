@@ -1,8 +1,13 @@
+"""
+File containing the function to run a grid of Mdot and separation configurations for a specific Mdonor and M accretor
+"""
+
 import numpy as np
 import cst
 from load_kap_table import *
 import pickle
 from math import pi, sqrt, sin, cos, tan, log, log10, floor, ceil
+
 
 savedir = './disk_sltns/'
 nofL2 = False   # turn on/off fL2

@@ -1,3 +1,7 @@
+"""
+File containing the constants relevant to the project
+"""
+
 # physical constants
 
 h = 6.6261e-27   # Planck constant
