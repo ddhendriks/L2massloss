@@ -1,5 +1,7 @@
 """
 File containing the function to run a grid of Mdot and separation configurations for a specific Mdonor and M accretor
+
+TODO: pass settings to all the functions
 """
 
 from math import pi, sqrt, log10
@@ -94,10 +96,12 @@ def run_fl2_grid_for_gridpoint(settings):
     PhiL2_dimless = -((1-mu)/abs(xL2) + mu/abs(1-xL2) + 0.5*(xL2-mu)**2)    # [G(M1+M2)/a]
     PhiRd_dimless = -(1 - mu + mu/Rd_over_a + 0.5 * (1-mu)**2)
 
+    # TODO: consider doing this in the functions
     # recover CGS units
     M2 = M2_in_Msun * constants.msun
     GM2 = constants.G*M2
 
+    # TODO: store in output structure to reduce arguments to all the functions
     # Set up structures for the solutions in 2D grids
     solu_the = np.empty((NM1dot, Na), dtype=float)  # outer disk thickness H/R
     solu_T = np.empty((NM1dot, Na), dtype=float)   # outer disk temperature
@@ -108,6 +112,7 @@ def run_fl2_grid_for_gridpoint(settings):
     Lacc_over_LEdd = np.empty((NM1dot, Na), dtype=float)
     QL2Qadv_over_Qrad = np.empty((NM1dot, Na), dtype=float)
 
+    # TODO: put in dict to store all the info
     # Set up interpolation table
     lgRgrid, lgTgrid, lgkapgrid, intp_lgkapgrid = set_up_kappa_interpolation_table(case=case, fdir=fdir, extrap=extrap)
 
@@ -137,6 +142,7 @@ def run_fl2_grid_for_gridpoint(settings):
             # Keplerian frequency at Rd
             omgK = sqrt(GM2/Rd**3)
 
+            # TODO: store the constants in a dictionary
             # TODO: make function call for this
             # constants involved in numerical solutions
             c1 = 2*pi * constants.arad * alpha_ss * Rd / (3 * omgK * M1dot)
@@ -144,6 +150,7 @@ def run_fl2_grid_for_gridpoint(settings):
             c3 = 8*pi**2 * constants.arad * alpha_ss * constants.c * Rd**2 / (M1dot**2 * omgK)
             c4 = 2*pi * mug * constants.arad * alpha_ss * omgK * constants.mp * Rd**3 / (constants.kB * M1dot)
 
+            # TODO: put the bisection into a function call
             # only T < Tmax is possible
             Tmax = (4./(27*c1**2*c2))**(1./9)
 
@@ -170,6 +177,7 @@ def run_fl2_grid_for_gridpoint(settings):
             logthegrid = np.log10(thegrid)
             dlogthe = logthegrid[1] - logthegrid[0]
 
+            # TODO: put in function
             # bisection to find the numerical solution to f2(the, T, fL2=0)=0
             theright = 1.
             f2right = f2_the_T_fL2(the=theright, T=T_the_nofL2(the=theright, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
@@ -200,9 +208,8 @@ def run_fl2_grid_for_gridpoint(settings):
             themax = sqrt(3./8 * c2 * T + 1./4 * (PhiL2-PhiRd)/(GM2/Rd) - 1./8)
 
             if the < themax or nofL2:   # this is the correct solution
+                # Calculate relevant properties
                 tau = rho*kap(rho=rho, T=T, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)*Rd*the / 2
-
-
                 Qrad = 2*pi*Rd**2*constants.arad*T**4*constants.c/tau
                 U = constants.arad*T**4 + 1.5*rho*constants.kB*T/mug/constants.mp
                 P = 1./3*constants.arad*T**4 + rho*constants.kB*T/mug/constants.mp
@@ -210,6 +217,8 @@ def run_fl2_grid_for_gridpoint(settings):
                 Md = 2*pi*rho*Rd**3*the
                 Qadv = 1.5*U/P * the**2 * GM2/Rd / tvis * Md
                 QL2 = 0.
+
+                # Store in result structures
                 solu_rho[n1, n2] = rho
                 solu_the[n1, n2] = the
                 solu_T[n1, n2] = T
@@ -225,13 +234,12 @@ def run_fl2_grid_for_gridpoint(settings):
 
             themin = 1./2 * sqrt((PhiL2-PhiRd)/(GM2/Rd) - 1./2)   # corresponding to fL2=1, T=0
 
+            # TODO put in function call
             # need to find the maximum corresponding to fL2=0
             # this is given by the intersection between T_the(the), T_the_nofL2(the)
             theleft = themin
             theright = 1.
             fleft = T_the(the=theleft, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2) - T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe)
-
-
             while abs((theleft - theright)/theright) > tol:
                 the = (theleft + theright)/2
                 f = T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2) - T_the_nofL2(the=the, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe)
@@ -252,6 +260,7 @@ def run_fl2_grid_for_gridpoint(settings):
             f2left = f2_the_T_fL2(the=theleft, T=T_the(the=theleft, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2), fL2=fL2_the(the=theleft, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd), c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
 
             theright = themax / (1 + eps_small)
+            # TODO: put in function call
             # bisection again
             while abs((theleft-theright)/theright) > tol:
                 the = (theleft + theright)/2
@@ -262,12 +271,15 @@ def run_fl2_grid_for_gridpoint(settings):
                     f2left = f2
                 else:
                     theright = the
-            # solution
+
+            # Determine solution
             the = (theleft + theright)/2
             T = T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2)
             fL2 = fL2_the(the=the, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd)
             rho = (1-fL2) * M1dot / (2*pi * alpha_ss * omgK * Rd**3) / the**3
 
+            # Calculate relevant properties
+            # TODO: put in function or make function calls for these quantities
             tau = rho*kap(rho=rho, T=T, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)*Rd*the / 2
             Qrad = 2*pi*Rd**2*constants.arad*T**4*constants.c/tau
             U = constants.arad*T**4 + 1.5*rho*constants.kB*T/mug/constants.mp
@@ -276,6 +288,9 @@ def run_fl2_grid_for_gridpoint(settings):
             Md = 2*pi*rho*Rd**3*the
             Qadv = 1.5*U/P * the**2 * GM2/Rd / tvis * Md
             QL2 = fL2 * M1dot * (PhiL2 - PhiRd - 0.5*GM2/Rd)
+
+            # Set results in output arrays
+            # TODO: Put in function 
             QL2Qadv_over_Qrad[n1, n2] = (QL2+Qadv)/Qrad
             solu_rho[n1, n2] = rho
             solu_the[n1, n2] = the
