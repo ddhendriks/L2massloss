@@ -8,66 +8,30 @@ TODO: generate interpolation table with all the values for binary_c
 TODO: make generate_header function for binary_c to use as the interpolation
 """
 
-import os
-import pickle
-import pandas as pd
-import numpy as np
+from l2_massloss_interpolation.L2massloss_fork.settings import grid_settings
+from l2_massloss_interpolation.L2massloss_fork.fL2_grid import run_fl2_grid_for_gridpoint
 
-grid_settings = {
-    ###########
-    # Grid settings to control the parameter pairs that we run wenbins functions for
-    'log10M_accretor_array': np.arange(-1, 2, 10),
-    'log10massratio_donor_accretor_array': np.arange(-1, 1, 10),
-    ###########
-    # Parameter configuration for wenbins functions
-    # Separation
-    'log10separation_min': 0.15,
-    'log10separation_max': 3.25,
-    # logamin, logamax = 0.15, 3.25   # [Msun/yr]
-    'log10separation_N': 10,
-    # Na = 200
 
-    # Donor Mdot
-    'log10Mdot_donor_min': -5,
-    'log10Mdot_donor_max': -1.3,
-    # logM1dotmin, logM1dotmax = -5.3, -1.3   # [Rsun]
-    'log10Mdot_donor_N': 10,
-    # NM1dot = 200
+def run_grid_main(settings, run_grid, generate_interpolation_table, generate_data_header):
+    """
+    Main function to run the grid
+    """
 
-    # Disk thickness search
-    "disk_thickness_search_grid_min": 0.1,
-    "disk_thickness_search_grid_max": 1.0,
-    # thegrid_min, thegrid_max = 0.1, 1.   # 0.1 to 1 is sufficient, we use analytic result below 0.1
-    "disk_thickness_search_grid_N": 50,
-    # Nthe = 50   # ~50 is accurate enough
+    # Run grid with multiprocessing
+    if run_grid:
 
-    ###########
-    # Control parameters for wenbins functions
-    "savedir": os.path.join(
-        os.environ["PROJECT_DATA_ROOT"],
-        "thick_disk_calculations_wenbin",
-        "TEST",
-    ),
-    # savedir = './disk_sltns/'
-    "nofL2": False,
-    # nofL2 = False   # turn on/off fL2
-    "kappa_case": 1, # 1 -- Hrich, solarZ; 2 -- Hpoor, solarZ; 3 -- Hrich, lowZ
-    # case = 1
-    "kappa_fdir": './kap_data/',
-    # fdir = './kap_data/'
-    "kappa_extrap": False,
-    # extrap = False   # extrapolation beyond grid may not be accurate [no need to]
-    "mass_accretor": 10.,
-    #M2_in_Msun = 10.   # [Msun]
-    "massratio_accretor_donor": .5,
-    # q = .5     # mass ratio accretor/donnor = M2/M1
-    "alpha_ss": 0.1,
-    # alpha_ss = 0.1   # viscosity
-    "tol": 1e-8,
-    # tol = 1e-8   # fractional tolerance for bisection method
-    "eps_small": 1e-12,
-    # eps_small = 1e-12   # a very small number
-    "Tfloor": 3e3,
-    # Tfloor = 3e3   # [K] --- the minimum value for disk temperature solution
+        run_fl2_grid_for_gridpoint(settings)
 
-}
+
+    # Generate interpolation table based on the results of the grid
+    if generate_interpolation_table:
+        pass
+
+    # Generate data header based on the results of the grid
+    if generate_data_header:
+        pass
+
+
+
+if __name__=="__main__":
+    run_grid_main(settings=grid_settings, run_grid=True, generate_interpolation_table=False, generate_data_header=False)

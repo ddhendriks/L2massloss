@@ -2,6 +2,7 @@
 Functions to calculate the opacity related quantities
 """
 
+import os
 import numpy as np
 import pylab as pl
 from scipy.interpolate import RectBivariateSpline
@@ -41,13 +42,13 @@ def get_opacity_table_data(fdir, fname1, fname2):
 
 
     # ----- highT opacity table 1
-    lgR1, lgT1, lgkap1 = parse(fdir+fname1)
+    lgR1, lgT1, lgkap1 = parse(os.path.join(fdir, fname1))
     lgRmin, lgRmax = min(lgR1), max(lgR1)
     lgTmin1, lgTmax1 = min(lgT1), max(lgT1)
     intp_lgkap1 = RectBivariateSpline(lgR1, lgT1, lgkap1, kx=3, ky=3, s=0)
 
     # ----- lowT opacity table 2 (which has the same lgRmin and lgRmax)
-    lgR2, lgT2, lgkap2 = parse(fdir+fname2)
+    lgR2, lgT2, lgkap2 = parse(os.path.join(fdir, fname2))
     lgTmin2, lgTmax2 = min(lgT2), max(lgT2)
     intp_lgkap2 = RectBivariateSpline(lgR2, lgT2, lgkap2, kx=3, ky=3, s=0)
     lgT_blend_center = (lgTmax2 + lgTmin1)/2

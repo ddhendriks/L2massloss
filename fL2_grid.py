@@ -12,7 +12,7 @@ from l2_massloss_interpolation.L2massloss_fork import constants
 import numpy as np
 from l2_massloss_interpolation.L2massloss_fork.functions.kappa_functions import set_up_kappa_interpolation_table, kap
 from l2_massloss_interpolation.L2massloss_fork.functions.output_functions import write_data_to_txt_file, write_data_to_pickle_file
-from l2_massloss_interpolation.L2massloss_fork.functions.functions import calculate_inner_disk_contribution, f1_the_T_fL2, f2_the_T_fL2, T_the_nofL2, T_the, fL2_the
+from l2_massloss_interpolation.L2massloss_fork.functions.functions import calculate_inner_disk_contribution, f1_the_T_fL2, f2_the_T_fL2, T_the_nofL2, T_the, fL2_the, run_thickness_bisection_using_f2_for_fl2ne0, bisect_temperature, calculate_function_constants, run_thickness_bisection_using_T_the_mins_T_the_nofL2, unnormalise_values
 
 
 
@@ -131,46 +131,18 @@ def run_fl2_grid_for_gridpoint(settings):
         # Loop over separation
         M1dot = 10**logM1dotgrid[n1] * constants.msun/constants.yr
         for n2 in range(Na):
-            # Un-normalise values
-            a = 10**logagrid[n2] * constants.rsun
-            Rd = Rd_over_a * a
-            Phi_units = constants.G*(M2/mu)/a
-            PhiL1 = PhiL1_dimless * Phi_units
-            PhiL2 = PhiL2_dimless * Phi_units
-            PhiRd = PhiRd_dimless * Phi_units
+            # Unnormalise values
+            a, Rd, Phi_units, PhiL1, PhiL2, PhiRd = unnormalise_values(logagrid=logagrid, n2=n2, Rd_over_a=Rd_over_a, M2=M2, mu=mu, PhiL1_dimless=PhiL1_dimless, PhiL2_dimless=PhiL2_dimless, PhiRd_dimless=PhiRd_dimless)
 
             # Keplerian frequency at Rd
             omgK = sqrt(GM2/Rd**3)
 
             # TODO: store the constants in a dictionary
-            # TODO: make function call for this
             # constants involved in numerical solutions
-            c1 = 2*pi * constants.arad * alpha_ss * Rd / (3 * omgK * M1dot)
-            c2 = constants.kB * Rd / (GM2 * mug * constants.mp)
-            c3 = 8*pi**2 * constants.arad * alpha_ss * constants.c * Rd**2 / (M1dot**2 * omgK)
-            c4 = 2*pi * mug * constants.arad * alpha_ss * omgK * constants.mp * Rd**3 / (constants.kB * M1dot)
+            c1, c2, c3, c4 = calculate_function_constants(alpha_ss=alpha_ss, Rd=Rd, omgK=omgK, M1dot=M1dot, GM2=GM2, mug=mug)
 
-            # TODO: put the bisection into a function call
-            # only T < Tmax is possible
-            Tmax = (4./(27*c1**2*c2))**(1./9)
-
-            Tarr = np.zeros(Nthe, dtype=float)
-            for i in range(Nthe):
-                the = thegrid[i]
-
-                # use bisection method
-                Tleft = 0.1 * min(the**2 / c2, Tmax)
-                f1left = f1_the_T_fL2(the=the, T=Tleft, fL2=0, c1=c1, c2=c2)
-                Tright = Tmax
-                while abs((Tleft-Tright)/Tright) > tol:
-                    T = (Tleft + Tright)/2
-                    f1 = f1_the_T_fL2(the=the, T=T, fL2=0, c1=c1, c2=c2)
-                    if f1 * f1left > 0:
-                        Tleft = T
-                        f1left = f1
-                    else:
-                        Tright = T
-                Tarr[i] = (Tleft + Tright)/2
+            # Find the temperatures associated with the thickness
+            Tarr = bisect_temperature(c1=c1, c2=c2, Nthe=Nthe, thegrid=thegrid, tol=tol)
 
             # now we have obtained numerical relation between the and T
             logTarr = np.log10(Tarr)
@@ -180,20 +152,20 @@ def run_fl2_grid_for_gridpoint(settings):
             # TODO: put in function
             # bisection to find the numerical solution to f2(the, T, fL2=0)=0
             theright = 1.
-            f2right = f2_the_T_fL2(the=theright, T=T_the_nofL2(the=theright, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
+            f2right = f2_the_T_fL2(the=theright, T=T_the_nofL2(the=theright, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
             separation_factor = 0.95
             theleft = separation_factor * theright
-            f2left = f2_the_T_fL2(the=theleft, T=T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
+            f2left = f2_the_T_fL2(the=theleft, T=T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
             while f2left*f2right > 0:  # need to decrease theleft
                 theright = theleft
                 f2right = f2left
                 theleft *= separation_factor
-                f2left = f2_the_T_fL2(the=theleft, T=T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
+                f2left = f2_the_T_fL2(the=theleft, T=T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
 
             # now the solution is between theleft and theright
             while abs((theleft-theright)/theright) > tol:
                 the = (theleft + theright)/2
-                f2 = f2_the_T_fL2(the=the, T=T_the_nofL2(the=the, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
+                f2 = f2_the_T_fL2(the=the, T=T_the_nofL2(the=the, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe), fL2=0, c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
                 if f2 * f2left > 0:
                     theleft = the
                     f2left = f2
@@ -240,15 +212,7 @@ def run_fl2_grid_for_gridpoint(settings):
             theleft = themin
             theright = 1.
             fleft = T_the(the=theleft, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2) - T_the_nofL2(the=theleft, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe)
-            while abs((theleft - theright)/theright) > tol:
-                the = (theleft + theright)/2
-                f = T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2) - T_the_nofL2(the=the, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe)
-
-                if f * fleft > 0:
-                    theleft = the
-                    fleft = f
-                else:
-                    theright = the
+            theleft, theright = run_thickness_bisection_using_T_the_mins_T_the_nofL2(theleft=theleft, fleft=fleft, theright=theright, tol=tol, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2, logthegrid=logthegrid, logTarr=logTarr, dlogthe=dlogthe)
             themax = (theleft + theright)/2   # this corresponds to fL2=0
 
             # --- numerical solution for f2(the, T, fL2)=0 under non-zero fL2
@@ -260,21 +224,8 @@ def run_fl2_grid_for_gridpoint(settings):
             f2left = f2_the_T_fL2(the=theleft, T=T_the(the=theleft, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2), fL2=fL2_the(the=theleft, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd), c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
             theright = themax / (1 + eps_small)
 
-            # TODO: put in function call
             # bisection again
-
-            # def run_thickness_bisection():
-            # theleft, theright = run_thickness_bisection()
-
-            while abs((theleft-theright)/theright) > tol:
-                the = (theleft + theright)/2
-                f2 = f2_the_T_fL2(the=the, T=T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2), fL2=fL2_the(the=the, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd), c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
-
-                if f2 * f2left > 0:
-                    theleft = the
-                    f2left = f2
-                else:
-                    theright = the
+            theleft, theright = run_thickness_bisection_using_f2_for_fl2ne0(theleft=theleft, f2left=f2left, theright=f2left, tol=tol, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2, c1=c1, c4=c4, c3=c3, PhiL1=PhiL1, alpha_ss=alpha_ss, M1dot=M1dot, omgK=omgK, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
 
             # Determine solution
             the = (theleft + theright)/2
