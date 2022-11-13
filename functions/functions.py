@@ -14,8 +14,7 @@ def f2_the_T_fL2(the, T, fL2, c4, M1dot, alpha_ss, omgK, Rd, c3, PhiRd, GM2, Phi
     x = c4 * (T*the)**3 / (1-fL2)
     U_over_P = (1.5 + x)/(1 + 1./3 * x)
     rho = (1-fL2) * M1dot / (2*pi * alpha_ss * omgK * Rd**3) / the**3
-    print(fL2, M1dot, alpha_ss, omgK, Rd, the)
-    print(rho)
+
     return 7./4 - (1.5 * U_over_P + c3*T**4 / kap(rho=rho, T=T, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid) / (1-fL2)**2) * the**2 \
         - PhiRd/(GM2/Rd) + (PhiL1 - fL2*PhiL2)/(GM2/Rd)/(1-fL2)
 
@@ -37,6 +36,7 @@ def T_the(the, PhiL2, PhiRd, GM2, Rd, c2):   # only for non-zero fL2
 
 def fL2_the(the, c1, c2, PhiL2, PhiRd, GM2, Rd):  # only for non-zero fL2
     T = T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2)
+
     return 1 - c1 * T**4 * the**3/(the**2 - c2*T)
 
 # compute T(Rsph, rho)
@@ -45,7 +45,7 @@ def func_T_Rsph_rho(T, Rsph, rho, mug, GM2):
 
 
 # compute fL2 contribution from the inner disk outflow
-def func_Rsph(lgRsph, Mdot, GM2, alpha_ss, mug, tol):
+def func_Rsph(lgRsph, Mdot, GM2, alpha_ss, mug, tol, lgRgrid, intp_lgkapgrid):
     Rsph = 10**lgRsph
     omgK_Rsph = sqrt(GM2/Rsph**3)
     rho = Mdot/(2*pi*alpha_ss*omgK_Rsph*Rsph**3)
@@ -65,18 +65,18 @@ def func_Rsph(lgRsph, Mdot, GM2, alpha_ss, mug, tol):
             fleft = fmid
     T = 0.5 * (Tleft + Tright)
 
-    return Rsph - Mdot*kap(rho, T)/(4*pi*constants.c)
+    return Rsph - Mdot*kap(rho=rho, T=T, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)/(4*pi*constants.c)
     # return Rsph - Mdot * 0.34 / (4 * pi * constants.c)   # simple Thomson opacity prescription
 
-def solve_Rsph(Mdot, tol, GM2, alpha_ss, mug):
+def solve_Rsph(Mdot, tol, GM2, alpha_ss, mug, lgRgrid, intp_lgkapgrid):
     lgRleft = 7.   # this should be small enough
     lgRright = 15.
-    fleft = func_Rsph(lgRsph=lgRleft, Mdot=Mdot, GM2=GM2, alpha_ss=alpha_ss, mug=mug, tol=tol)
+    fleft = func_Rsph(lgRsph=lgRleft, Mdot=Mdot, GM2=GM2, alpha_ss=alpha_ss, mug=mug, tol=tol, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
 
     # fleft should be negative
     while abs(lgRleft-lgRright) > tol:
         lgR = (lgRleft + lgRright)/2
-        fmid = func_Rsph(lgRsph=lgR, Mdot=Mdot, GM2=GM2, alpha_ss=alpha_ss, mug=mug, tol=tol)
+        fmid = func_Rsph(lgRsph=lgR, Mdot=Mdot, GM2=GM2, alpha_ss=alpha_ss, mug=mug, tol=tol, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
         if fleft * fmid < 0:
             lgRright = lgR
         else:
@@ -89,7 +89,7 @@ def solve_Rsph(Mdot, tol, GM2, alpha_ss, mug):
 
 
 
-def calculate_inner_disk_contribution(NM1dot, logM1dotgrid, Na, logagrid, Rd_over_a, PhiL2_dimless, M2, mu, solu_fL2, solu_fL2_inner, GM2, tol, alpha_ss, mug):
+def calculate_inner_disk_contribution(NM1dot, logM1dotgrid, Na, logagrid, Rd_over_a, PhiL2_dimless, M2, mu, solu_fL2, solu_fL2_inner, GM2, tol, alpha_ss, mug, lgRgrid, intp_lgkapgrid):
     """
     Function to calculate and set the inner disk L2 mass loss contribution
     """
@@ -98,12 +98,14 @@ def calculate_inner_disk_contribution(NM1dot, logM1dotgrid, Na, logagrid, Rd_ove
         M1dot = 10**logM1dotgrid[n1]*constants.msun/constants.yr
         for n2 in range(Na):
             a = 10**logagrid[n2]*constants.rsun
+
             # auxiliary parameters
             Rd = Rd_over_a * a
             PhiL2 = PhiL2_dimless * constants.G*(M2/mu)/a
             fL2_out = solu_fL2[n1, n2]
+
             # solve for Rsph
-            Rsph = min(Rd, solve_Rsph(Mdot=(1-fL2_out)*M1dot, tol=tol, GM2=GM2, alpha_ss=alpha_ss, mug=mug))
+            Rsph = min(Rd, solve_Rsph(Mdot=(1-fL2_out)*M1dot, tol=tol, GM2=GM2, alpha_ss=alpha_ss, mug=mug, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid))
             solu_fL2_inner[n1, n2] = (1-fL2_out) * abs(PhiL2)*Rsph/GM2
 
     return solu_fL2_inner

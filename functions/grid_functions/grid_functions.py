@@ -1,3 +1,21 @@
+"""
+File containing functions to handle the grid of calculations. The specific functions to calculate all the results for each grid-point are in the repo L2massloss_fork
+"""
+
+import os
+import json
+import copy
+
+import pickle
+
+import numpy as np
+
+
+
+
+
+
+
 # """
 # Script containing function to convert the interpolation table file to the structure for binary_c
 

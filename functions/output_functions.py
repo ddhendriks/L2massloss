@@ -1,7 +1,7 @@
 """
 Output related functions
 """
-
+import os
 import pickle
 import numpy as np
 
@@ -43,6 +43,8 @@ def write_data_to_pickle_file(savedir, savename, logM1dotgrid, logagrid, solu_fL
                 np.log10(solu_the), np.log10(solu_T), np.log10(Lacc_over_LEdd),
                 np.log10(QL2Qadv_over_Qrad), np.log10(solu_tau), np.log10(solu_rho)]
 
-    with open(savedir+savename+'.pkl', 'wb') as f:
+    #
+    full_path_output_file = os.path.join(savedir, savename)
+    with open(full_path_output_file, 'wb') as f:
         pickle.dump(data_all, f)
-        print('data saved at:' + savedir+savename+'.pkl')
+        print('data saved at: {}'.format(full_path_output_file))

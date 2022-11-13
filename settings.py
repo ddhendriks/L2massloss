@@ -10,9 +10,19 @@ this_file_dir = os.path.dirname(this_file)
 
 grid_settings = {
     ###########
+    # Global control settings
+    "backup_if_data_exists": True,
+    "run": True,
+    "num_cores": 4,
+    "max_job_queue_size": 100,
+    "separator": "\t",
+    "verbosity": 0,
+
+    ###########
     # Grid settings to control the parameter pairs that we run wenbins functions for
-    'log10M_accretor_array': np.arange(-1, 2, 10),
-    'log10massratio_donor_accretor_array': np.arange(-1, 1, 10),
+    'log10M_accretor_array': np.linspace(-1.0, 2.0, 10),
+    'log10massratio_donor_accretor_array': np.linspace(-1.0, 1.0, 10),
+
     ###########
     # Parameter configuration for wenbins functions
     # Separation
@@ -33,7 +43,7 @@ grid_settings = {
     "disk_thickness_search_grid_min": 0.1,
     "disk_thickness_search_grid_max": 1.0,
     # thegrid_min, thegrid_max = 0.1, 1.   # 0.1 to 1 is sufficient, we use analytic result below 0.1
-    "disk_thickness_search_grid_N": 10,
+    "disk_thickness_search_grid_N": 50,
     # Nthe = 50   # ~50 is accurate enough
 
     ###########

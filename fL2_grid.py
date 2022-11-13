@@ -4,6 +4,7 @@ File containing the function to run a grid of Mdot and separation configurations
 TODO: pass settings to all the functions
 """
 
+import os
 from math import pi, sqrt, log10
 # from math import pi, sqrt, sin, cos, tan, log, log10, floor, ceil
 
@@ -20,6 +21,9 @@ def run_fl2_grid_for_gridpoint(settings):
     """
     Function to run a grid of Mdot and separation configurations for a specific Mdonor and M accretor
     """
+
+    print(settings)
+    return 
 
     ######
     # Read out settings
@@ -53,8 +57,9 @@ def run_fl2_grid_for_gridpoint(settings):
     ######
     # Set parameters based on the settings
 
-    # Set savename
-    savename = 'fL2grid_M%.1f_q%.1f_case%d' % (M2_in_Msun, q, case)
+    # Set savename NOTE: not valid for old txt based output
+    os.makedirs(savedir, exist_ok=True)
+    savename = 'fL2grid_M{:.1f}_q{:.1f}_case{:d}.pkl'.format(M2_in_Msun, q, case)
 
     # ---caution:
     # for very large binary separation a >> 1 AU and low Mdot << 1e-5 Msun/yr,
@@ -122,7 +127,7 @@ def run_fl2_grid_for_gridpoint(settings):
 
     # Loop over Mdot
     for n1 in range(NM1dot):
-
+        print(n1, NM1dot)
         # Calculate percentage
         if 100*n1/NM1dot > percent:
             print('%d percent' % percent)
@@ -225,7 +230,7 @@ def run_fl2_grid_for_gridpoint(settings):
             theright = themax / (1 + eps_small)
 
             # bisection again
-            theleft, theright = run_thickness_bisection_using_f2_for_fl2ne0(theleft=theleft, f2left=f2left, theright=f2left, tol=tol, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2, c1=c1, c4=c4, c3=c3, PhiL1=PhiL1, alpha_ss=alpha_ss, M1dot=M1dot, omgK=omgK, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
+            theleft, theright = run_thickness_bisection_using_f2_for_fl2ne0(theleft=theleft, f2left=f2left, theright=theright, tol=tol, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2, c1=c1, c4=c4, c3=c3, PhiL1=PhiL1, alpha_ss=alpha_ss, M1dot=M1dot, omgK=omgK, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
 
             # Determine solution
             the = (theleft + theright)/2
@@ -272,7 +277,7 @@ def run_fl2_grid_for_gridpoint(settings):
         GM2=GM2,
         tol=tol,
         alpha_ss=alpha_ss,
-        mug=mug
+        mug=mug, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid
     )
 
     #######
