@@ -258,10 +258,14 @@ def run_fl2_grid_for_gridpoint(settings):
             themin = sqrt(3./8*c2*Tfloor + 1./4 * (PhiL2-PhiRd)/(GM2/Rd) - 1./8)
             theleft = themin  #
             f2left = f2_the_T_fL2(the=theleft, T=T_the(the=theleft, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2), fL2=fL2_the(the=theleft, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd), c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2, lgRgrid=lgRgrid, intp_lgkapgrid=intp_lgkapgrid)
-
             theright = themax / (1 + eps_small)
+
             # TODO: put in function call
             # bisection again
+
+            # def run_thickness_bisection():
+            # theleft, theright = run_thickness_bisection()
+
             while abs((theleft-theright)/theright) > tol:
                 the = (theleft + theright)/2
                 f2 = f2_the_T_fL2(the=the, T=T_the(the=the, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd, c2=c2), fL2=fL2_the(the=the, c1=c1, c2=c2, PhiL2=PhiL2, PhiRd=PhiRd, GM2=GM2, Rd=Rd), c4=c4, M1dot=M1dot, alpha_ss=alpha_ss, omgK=omgK, Rd=Rd, c3=c3, PhiRd=PhiRd, GM2=GM2, PhiL1=PhiL1, PhiL2=PhiL2)
